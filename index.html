@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horário 10º ASBD3</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --accent: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding-bottom: 30px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 20px 16px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .current-status {
+            background: #eff6ff;
+            border-left: 4px solid var(--primary);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .current-status h3 {
+            font-size: 0.9rem;
+            color: var(--primary-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .current-status p {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+        }
+
+        .tab-btn {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .schedule-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card.active-now {
+            border: 2px solid var(--accent);
+            background: #fffbe2;
+        }
+
+        .time-box {
+            display: flex;
+            flex-direction: column;
+            min-width: 90px;
+        }
+
+        .time-box .time {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .info-box {
+            flex-grow: 1;
+            padding-left: 12px;
+        }
+
+        .subject {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .room {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .empty-day {
+            text-align: center;
+            padding: 30px 10px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* Tabela Completa */
+        .full-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            font-size: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .full-table th, .full-table td {
+            border: 1px solid var(--border);
+            padding: 6px 4px;
+            text-align: center;
+        }
+
+        .full-table th {
+            background: #f1f5f9;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Escola Sec. Polivalente Cesaltina Ramos</h1>
+        <p>10º ASBD3 | Sala 5 - Bloco 1 (2026/2027)</p>
+    </header>
+
+    <div class="container">
+
+        <div class="current-status" id="status-box">
+            <h3>Estado Atual</h3>
+            <p id="current-text">A verificar o horário...</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn" onclick="showDay('SEG')">Seg</button>
+            <button class="tab-btn" onclick="showDay('TER')">Ter</button>
+            <button class="tab-btn" onclick="showDay('QUA')">Qua</button>
+            <button class="tab-btn" onclick="showDay('QUI')">Qui</button>
+            <button class="tab-btn" onclick="showDay('SEX')">Sex</button>
+            <button class="tab-btn" onclick="showDay('ALL')">Tabela</button>
+        </div>
+
+        <div id="day-content" class="schedule-list"></div>
+
+    </div>
+
+    <script>
+        const scheduleData = {
+            SEG: [
+                { start: "08:30", end: "09:20", name: "Ed. Física", room: "Campo" },
+                { start: "09:30", end: "10:20", name: "Português", room: "S11B1" },
+                { start: "13:00", end: "13:50", name: "Matemática", room: "Sala 5" },
+                { start: "14:00", end: "14:50", name: "Matemática", room: "Sala 5" },
+                { start: "15:00", end: "15:50", name: "Filosofia", room: "Sala 5" },
+                { start: "16:10", end: "17:00", name: "TIC", room: "S19" },
+                { start: "17:10", end: "18:00", name: "TIC", room: "S19" }
+            ],
+            TER: [
+                { start: "13:00", end: "13:50", name: "MSI", room: "S24" },
+                { start: "14:00", end: "14:50", name: "MSI", room: "S24" },
+                { start: "15:00", end: "15:50", name: "Matemática", room: "Sala 5" },
+                { start: "16:10", end: "17:00", name: "ICS", room: "S19" },
+                { start: "17:10", end: "18:00", name: "ICS", room: "S19" }
+            ],
+            QUA: [
+                { start: "13:00", end: "13:50", name: "Inglês", room: "Sala 5" },
+                { start: "14:00", end: "14:50", name: "Matemática", room: "Sala 5" },
+                { start: "15:00", end: "15:50", name: "ICS", room: "S19" },
+                { start: "16:10", end: "17:00", name: "ICS", room: "S19" }
+            ],
+            QUI: [
+                { start: "07:30", end: "08:20", name: "Português", room: "S3B2" },
+                { start: "08:30", end: "09:20", name: "Português", room: "S3B2" },
+                { start: "09:30", end: "10:20", name: "Físico Química", room: "S3B2" },
+                { start: "13:00", end: "13:50", name: "Francês", room: "Sala 5" },
+                { start: "14:00", end: "14:50", name: "Filosofia", room: "Sala 5" },
+                { start: "15:00", end: "15:50", name: "USI/AC", room: "S19" },
+                { start: "16:10", end: "17:00", name: "USI/AC", room: "S19" },
+                { start: "17:10", end: "18:00", name: "Inglês", room: "Sala 5" }
+            ],
+            SEX: [
+                { start: "07:30", end: "08:20", name: "Físico Química", room: "S8B1" },
+                { start: "08:30", end: "09:20", name: "Físico Química", room: "S8B1" },
+                { start: "09:30", end: "10:20", name: "Ed. Física", room: "Campo" },
+                { start: "13:00", end: "13:50", name: "USI/AC", room: "S25" },
+                { start: "14:00", end: "14:50", name: "USI/AC", room: "S25" },
+                { start: "15:00", end: "15:50", name: "Francês", room: "Sala 5" },
+                { start: "16:10", end: "17:00", name: "MSI", room: "S24" },
+                { start: "17:10", end: "18:00", name: "MSI", room: "S24" }
+            ]
+        };
+
+        const daysMap = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+
+        function getTodayCode() {
+            const todayIndex = new Date().getDay();
+            return daysMap[todayIndex];
+        }
+
+        function showDay(dayCode) {
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            const selectedBtn = Array.from(buttons).find(b => b.textContent.toLowerCase().includes(dayCode.toLowerCase()) || (dayCode==='ALL' && b.textContent==='Tabela'));
+            if(selectedBtn) selectedBtn.classList.add('active');
+
+            const container = document.getElementById('day-content');
+            container.innerHTML = '';
+
+            if (dayCode === 'ALL') {
+                renderFullTable(container);
+                return;
+            }
+
+            const daySchedule = scheduleData[dayCode];
+
+            if (!daySchedule || daySchedule.length === 0) {
+                container.innerHTML = '<div class="empty-day">Sem aulas agendadas para este dia. 🎉</div>';
+                return;
+            }
+
+            daySchedule.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="time-box">
+                        <span class="time">${item.start}</span>
+                        <span class="time" style="color:var(--text-muted); font-size:0.8rem;">${item.end}</span>
+                    </div>
+                    <div class="info-box">
+                        <div class="subject">${item.name}</div>
+                        <div class="room">📍 ${item.room}</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderFullTable(container) {
+            let html = `<table class="full-table">
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>SEG</th>
+                        <th>TER</th>
+                        <th>QUA</th>
+                        <th>QUI</th>
+                        <th>SEX</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            const times = ["07:30 - 08:20", "08:30 - 09:20", "09:30 - 10:20", "13:00 - 13:50", "14:00 - 14:50", "15:00 - 15:50", "16:10 - 17:00", "17:10 - 18:00"];
+
+            times.forEach(t => {
+                const [start] = t.split(' - ');
+                html += `<tr><td><b>${t}</b></td>`;
+                ['SEG', 'TER', 'QUA', 'QUI', 'SEX'].forEach(day => {
+                    const found = scheduleData[day].find(x => x.start === start);
+                    html += `<td>${found ? `<b>${found.name}</b><br><small>${found.room}</small>` : '-'}</td>`;
+                });
+                html += `</tr>`;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        function checkCurrentStatus() {
+            const now = new Date();
+            const todayCode = getTodayCode();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+            const statusText = document.getElementById('current-text');
+
+            if (!scheduleData[todayCode]) {
+                statusText.textContent = "Hoje não há aulas agendadas!";
+                return;
+            }
+
+            let activeLesson = null;
+
+            scheduleData[todayCode].forEach(lesson => {
+                const [hStart, mStart] = lesson.start.split(':').map(Number);
+                const [hEnd, mEnd] = lesson.end.split(':').map(Number);
+                const startTotal = hStart * 60 + mStart;
+                const endTotal = hEnd * 60 + mEnd;
+
+                if (currentMinutes >= startTotal && currentMinutes <= endTotal) {
+                    activeLesson = lesson;
+                }
+            });
+
+            if (activeLesson) {
+                statusText.innerHTML = `A decorrer agora: <b>${activeLesson.name}</b> (${activeLesson.room})`;
+            } else {
+                statusText.textContent = "Nenhuma aula a decorrer neste momento.";
+            }
+        }
+
+        // Inicialização
+        const today = getTodayCode();
+        if (scheduleData[today]) {
+            showDay(today);
+        } else {
+            showDay('SEG');
+        }
+        checkCurrentStatus();
+    </script>
+</body>
+  </html>
